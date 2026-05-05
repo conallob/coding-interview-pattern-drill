@@ -24,11 +24,26 @@ const (
 	colorBold   = "\033[1m"
 )
 
+// splitCSV splits a comma-separated string into trimmed, lowercased tokens,
+// dropping any empty entries. Returns nil for an empty input string.
+func splitCSV(s string) []string {
+	if s == "" {
+		return nil
+	}
+	var out []string
+	for _, part := range strings.Split(s, ",") {
+		if v := strings.TrimSpace(strings.ToLower(part)); v != "" {
+			out = append(out, v)
+		}
+	}
+	return out
+}
+
 // Run is the entrypoint for the CLI subcommand.
 func Run(args []string) {
 	fs := flag.NewFlagSet("pattern-drill", flag.ExitOnError)
-	difficulty := fs.String("difficulty", "", "Filter by difficulty: Easy, Medium, Hard")
-	tag := fs.String("tag", "", "Filter by pattern slug (e.g. hash-table)")
+	difficulty := fs.String("difficulty", "", "Difficulties to include, comma-separated: easy,medium,hard")
+	tag        := fs.String("tag", "", "Pattern slugs to include, comma-separated (see --list-tags)")
 	count := fs.Int("count", 10, "Number of questions per session")
 	listTags := fs.Bool("list-tags", false, "List all 18 patterns and exit")
 	refreshCache := fs.Bool("refresh-cache", false, "Ignore cached problems and re-fetch")
@@ -78,7 +93,7 @@ func Run(args []string) {
 	}
 
 	// Filter & build session
-	filtered := quiz.FilterProblems(problems, *difficulty, *tag)
+	filtered := quiz.FilterProblems(problems, splitCSV(*difficulty), splitCSV(*tag))
 	if len(filtered) == 0 {
 		fmt.Fprintln(os.Stderr, colorRed+"No problems match the given filters."+colorReset)
 		os.Exit(1)

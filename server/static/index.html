@@ -180,10 +180,14 @@
       transition: all 0.2s;
     }
 
-    .diff-btn.selected { border-color: var(--accent); color: var(--accent); background: rgba(88,166,255,0.1); }
-    .diff-btn[data-diff="Easy"].selected { border-color: var(--success); color: var(--success); background: rgba(63,185,80,0.1); }
+    .diff-btn[data-diff="Easy"].selected  { border-color: var(--success); color: var(--success); background: rgba(63,185,80,0.1); }
     .diff-btn[data-diff="Medium"].selected { border-color: var(--warning); color: var(--warning); background: rgba(210,153,34,0.1); }
-    .diff-btn[data-diff="Hard"].selected { border-color: var(--error); color: var(--error); background: rgba(248,81,73,0.1); }
+    .diff-btn[data-diff="Hard"].selected  { border-color: var(--error);   color: var(--error);   background: rgba(248,81,73,0.1); }
+    .filter-hint { font-size: 0.75rem; color: var(--muted); font-weight: 400; margin-left: 4px; }
+    .tag-list { max-height: 190px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; padding: 4px 0; margin-bottom: 4px; }
+    .tag-list label { display: flex; align-items: center; gap: 10px; padding: 5px 12px; cursor: pointer; font-size: 0.875rem; border-radius: 4px; }
+    .tag-list label:hover { background: rgba(255,255,255,0.05); }
+    .tag-list input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; flex-shrink: 0; }
 
     /* Difficulty badge */
     .badge {
@@ -507,18 +511,15 @@
       <div class="card">
         <h2>Start a Quiz</h2>
 
-        <label>Difficulty</label>
+        <label>Difficulty <span class="filter-hint">(none = all)</span></label>
         <div class="diff-group">
-          <button class="diff-btn selected" data-diff="">All</button>
           <button class="diff-btn" data-diff="Easy">Easy</button>
           <button class="diff-btn" data-diff="Medium">Medium</button>
           <button class="diff-btn" data-diff="Hard">Hard</button>
         </div>
 
-        <label for="tag-select">Pattern</label>
-        <select id="tag-select">
-          <option value="">All Patterns</option>
-        </select>
+        <label>Patterns <span class="filter-hint">(none = all)</span></label>
+        <div class="tag-list" id="tag-list"></div>
 
         <label for="count-input">Number of Questions</label>
         <input type="number" id="count-input" value="10" min="1" max="100">
@@ -593,7 +594,8 @@
   'use strict';
 
   // ── State ──────────────────────────────────────────────────────────────────
-  let selectedDiff = '';
+  const selectedDiffs = new Set();
+  const selectedTags  = new Set();
   let activeScreen = '';
   let quizTotal = 0;
   let pollTimer = null;
@@ -703,30 +705,35 @@
   async function loadTags() {
     try {
       const { data } = await apiFetch('/api/tags');
-      const sel = document.getElementById('tag-select');
+      const list = document.getElementById('tag-list');
       data.forEach(t => {
-        const opt = document.createElement('option');
-        opt.value = t.slug;
-        opt.textContent = t.name;
-        sel.appendChild(opt);
+        const lbl = document.createElement('label');
+        const cb  = document.createElement('input');
+        cb.type  = 'checkbox';
+        cb.value = t.slug;
+        cb.addEventListener('change', () => {
+          cb.checked ? selectedTags.add(t.slug) : selectedTags.delete(t.slug);
+        });
+        lbl.appendChild(cb);
+        lbl.appendChild(document.createTextNode(t.name));
+        list.appendChild(lbl);
       });
     } catch (e) {
       console.warn('Failed to load tags:', e);
     }
   }
 
-  // Difficulty buttons
+  // Difficulty buttons — each toggles independently
   document.querySelectorAll('.diff-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('selected'));
-      btn.classList.add('selected');
-      selectedDiff = btn.dataset.diff;
+      btn.classList.toggle('selected');
+      const d = btn.dataset.diff;
+      btn.classList.contains('selected') ? selectedDiffs.add(d) : selectedDiffs.delete(d);
     });
   });
 
   // Start quiz
   document.getElementById('start-quiz-btn').addEventListener('click', async () => {
-    const tag = document.getElementById('tag-select').value;
     const count = parseInt(document.getElementById('count-input').value, 10) || 10;
     hideMsg('idle-msg');
     showLoading('Loading problems...');
@@ -734,7 +741,12 @@
       const { ok, data } = await apiFetch('/api/quiz/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ difficulty: selectedDiff, tag, count, refresh: false })
+        body: JSON.stringify({
+          difficulties: [...selectedDiffs],
+          tags:         [...selectedTags],
+          count,
+          refresh: false
+        })
       });
       if (ok && data.ok) {
         quizTotal = data.total;

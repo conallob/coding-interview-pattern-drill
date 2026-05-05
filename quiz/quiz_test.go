@@ -39,7 +39,7 @@ func TestFilterExcludesNoPatternProblems(t *testing.T) {
 		makeProblem("no-pattern", "Easy", "array", "string"), // non-pattern tags only
 		makeProblem("has-pattern", "Easy", "two-pointers"),
 	}
-	got := quiz.FilterProblems(problems, "", "")
+	got := quiz.FilterProblems(problems, nil, nil)
 	if len(got) != 1 || got[0].TitleSlug != "has-pattern" {
 		t.Errorf("got %v, want [has-pattern]", slugsOf(got))
 	}
@@ -51,9 +51,25 @@ func TestFilterByDifficultyEasy(t *testing.T) {
 		makeProblem("b", "Medium", "sliding-window"),
 		makeProblem("c", "Hard", "dynamic-programming"),
 	}
-	got := quiz.FilterProblems(problems, "easy", "")
+	got := quiz.FilterProblems(problems, []string{"easy"}, nil)
 	if len(got) != 1 || got[0].TitleSlug != "a" {
 		t.Errorf("got %v, want [a]", slugsOf(got))
+	}
+}
+
+func TestFilterByMultipleDifficulties(t *testing.T) {
+	problems := []leetcode.Problem{
+		makeProblem("a", "Easy", "two-pointers"),
+		makeProblem("b", "Medium", "sliding-window"),
+		makeProblem("c", "Hard", "dynamic-programming"),
+	}
+	got := quiz.FilterProblems(problems, []string{"easy", "hard"}, nil)
+	if len(got) != 2 {
+		t.Fatalf("got %v, want [a c]", slugsOf(got))
+	}
+	slugSet := map[string]bool{got[0].TitleSlug: true, got[1].TitleSlug: true}
+	if !slugSet["a"] || !slugSet["c"] {
+		t.Errorf("got %v, want [a c]", slugsOf(got))
 	}
 }
 
@@ -63,7 +79,7 @@ func TestFilterByDifficultyCaseInsensitive(t *testing.T) {
 		makeProblem("b", "Easy", "binary-search"),
 	}
 	for _, d := range []string{"Medium", "medium", "MEDIUM"} {
-		got := quiz.FilterProblems(problems, d, "")
+		got := quiz.FilterProblems(problems, []string{d}, nil)
 		if len(got) != 1 || got[0].TitleSlug != "a" {
 			t.Errorf("difficulty=%q: got %v, want [a]", d, slugsOf(got))
 		}
@@ -75,9 +91,25 @@ func TestFilterByTagMatchesPrimary(t *testing.T) {
 		makeProblem("a", "Easy", "two-pointers"),
 		makeProblem("b", "Easy", "sliding-window"),
 	}
-	got := quiz.FilterProblems(problems, "", "two-pointers")
+	got := quiz.FilterProblems(problems, nil, []string{"two-pointers"})
 	if len(got) != 1 || got[0].TitleSlug != "a" {
 		t.Errorf("got %v, want [a]", slugsOf(got))
+	}
+}
+
+func TestFilterByMultipleTags(t *testing.T) {
+	problems := []leetcode.Problem{
+		makeProblem("a", "Easy", "two-pointers"),
+		makeProblem("b", "Easy", "sliding-window"),
+		makeProblem("c", "Easy", "dynamic-programming"),
+	}
+	got := quiz.FilterProblems(problems, nil, []string{"two-pointers", "sliding-window"})
+	if len(got) != 2 {
+		t.Fatalf("got %v, want [a b]", slugsOf(got))
+	}
+	slugSet := map[string]bool{got[0].TitleSlug: true, got[1].TitleSlug: true}
+	if !slugSet["a"] || !slugSet["b"] {
+		t.Errorf("got %v, want [a b]", slugsOf(got))
 	}
 }
 
@@ -87,7 +119,7 @@ func TestFilterByTagMatchesSecondary(t *testing.T) {
 		makeProblem("a", "Easy", "two-pointers", "sliding-window"),
 		makeProblem("b", "Easy", "dynamic-programming"),
 	}
-	got := quiz.FilterProblems(problems, "", "sliding-window")
+	got := quiz.FilterProblems(problems, nil, []string{"sliding-window"})
 	if len(got) != 1 || got[0].TitleSlug != "a" {
 		t.Errorf("got %v, want [a]", slugsOf(got))
 	}
@@ -99,9 +131,27 @@ func TestFilterByDifficultyAndTag(t *testing.T) {
 		makeProblem("medium-match", "Medium", "binary-search"),
 		makeProblem("easy-no-tag", "Easy", "greedy"),
 	}
-	got := quiz.FilterProblems(problems, "easy", "binary-search")
+	got := quiz.FilterProblems(problems, []string{"easy"}, []string{"binary-search"})
 	if len(got) != 1 || got[0].TitleSlug != "easy-match" {
 		t.Errorf("got %v, want [easy-match]", slugsOf(got))
+	}
+}
+
+func TestFilterByMultipleDifficultiesAndMultipleTags(t *testing.T) {
+	problems := []leetcode.Problem{
+		makeProblem("a", "Easy", "two-pointers"),
+		makeProblem("b", "Medium", "sliding-window"),
+		makeProblem("c", "Hard", "two-pointers"),
+		makeProblem("d", "Easy", "dynamic-programming"),
+	}
+	// Easy or Hard, with two-pointers tag
+	got := quiz.FilterProblems(problems, []string{"easy", "hard"}, []string{"two-pointers"})
+	if len(got) != 2 {
+		t.Fatalf("got %v, want [a c]", slugsOf(got))
+	}
+	slugSet := map[string]bool{got[0].TitleSlug: true, got[1].TitleSlug: true}
+	if !slugSet["a"] || !slugSet["c"] {
+		t.Errorf("got %v, want [a c]", slugsOf(got))
 	}
 }
 
@@ -109,14 +159,14 @@ func TestFilterNoMatch(t *testing.T) {
 	problems := []leetcode.Problem{
 		makeProblem("a", "Easy", "two-pointers"),
 	}
-	got := quiz.FilterProblems(problems, "hard", "")
+	got := quiz.FilterProblems(problems, []string{"hard"}, nil)
 	if len(got) != 0 {
 		t.Errorf("got %v, want empty slice", slugsOf(got))
 	}
 }
 
 func TestFilterEmpty(t *testing.T) {
-	got := quiz.FilterProblems(nil, "", "")
+	got := quiz.FilterProblems(nil, nil, nil)
 	if len(got) != 0 {
 		t.Errorf("got %v, want empty slice for nil input", got)
 	}
