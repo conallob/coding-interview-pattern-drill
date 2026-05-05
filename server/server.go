@@ -228,10 +228,10 @@ func (a *App) handleQuizStart(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var body struct {
-		Difficulty string `json:"difficulty"`
-		Tag        string `json:"tag"`
-		Count      int    `json:"count"`
-		Refresh    bool   `json:"refresh"`
+		Difficulties []string `json:"difficulties"`
+		Tags         []string `json:"tags"`
+		Count        int      `json:"count"`
+		Refresh      bool     `json:"refresh"`
 	}
 	body.Count = 10
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -248,7 +248,7 @@ func (a *App) handleQuizStart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	filtered := quiz.FilterProblems(problems, body.Difficulty, body.Tag)
+	filtered := quiz.FilterProblems(problems, body.Difficulties, body.Tags)
 	session := quiz.NewSession(filtered, body.Count)
 
 	a.mu.Lock()

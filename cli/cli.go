@@ -24,11 +24,27 @@ const (
 	colorBold   = "\033[1m"
 )
 
+// multiFlag is a flag.Value that accumulates comma-separated or repeated string values.
+// Both --flag a --flag b and --flag a,b are accepted.
+type multiFlag []string
+
+func (m *multiFlag) String() string        { return strings.Join(*m, ",") }
+func (m *multiFlag) Set(s string) error {
+	for _, part := range strings.Split(s, ",") {
+		if v := strings.TrimSpace(strings.ToLower(part)); v != "" {
+			*m = append(*m, v)
+		}
+	}
+	return nil
+}
+
 // Run is the entrypoint for the CLI subcommand.
 func Run(args []string) {
 	fs := flag.NewFlagSet("pattern-drill", flag.ExitOnError)
-	difficulty := fs.String("difficulty", "", "Filter by difficulty: Easy, Medium, Hard")
-	tag := fs.String("tag", "", "Filter by pattern slug (e.g. hash-table)")
+	var difficulties multiFlag
+	var tags multiFlag
+	fs.Var(&difficulties, "difficulty", "Filter by difficulty (repeatable or comma-separated): easy,medium,hard")
+	fs.Var(&tags, "tag", "Filter by pattern slug (repeatable or comma-separated; see --list-tags)")
 	count := fs.Int("count", 10, "Number of questions per session")
 	listTags := fs.Bool("list-tags", false, "List all 18 patterns and exit")
 	refreshCache := fs.Bool("refresh-cache", false, "Ignore cached problems and re-fetch")
@@ -78,7 +94,7 @@ func Run(args []string) {
 	}
 
 	// Filter & build session
-	filtered := quiz.FilterProblems(problems, *difficulty, *tag)
+	filtered := quiz.FilterProblems(problems, difficulties, tags)
 	if len(filtered) == 0 {
 		fmt.Fprintln(os.Stderr, colorRed+"No problems match the given filters."+colorReset)
 		os.Exit(1)

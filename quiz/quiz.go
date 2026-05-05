@@ -148,11 +148,21 @@ func buildQuestion(p leetcode.Problem) *Question {
 	}
 }
 
-// FilterProblems filters problems by difficulty and/or tag slug.
-// Problems without a primary pattern are excluded.
-func FilterProblems(problems []leetcode.Problem, difficulty, tagSlug string) []leetcode.Problem {
-	var result []leetcode.Problem
+// FilterProblems filters problems by difficulty and/or tag slugs.
+// Pass nil/empty slices to skip a filter. Problems without a primary pattern are always excluded.
+// A problem passes the difficulty filter if its difficulty matches any of the provided values.
+// A problem passes the tag filter if it carries any of the provided tag slugs.
+func FilterProblems(problems []leetcode.Problem, difficulties, tagSlugs []string) []leetcode.Problem {
+	diffSet := make(map[string]bool, len(difficulties))
+	for _, d := range difficulties {
+		diffSet[strings.ToLower(d)] = true
+	}
+	tagSet := make(map[string]bool, len(tagSlugs))
+	for _, t := range tagSlugs {
+		tagSet[t] = true
+	}
 
+	var result []leetcode.Problem
 	for _, p := range problems {
 		// Must have a primary pattern
 		hasPrimary := false
@@ -166,16 +176,16 @@ func FilterProblems(problems []leetcode.Problem, difficulty, tagSlug string) []l
 			continue
 		}
 
-		// Filter by difficulty (case-insensitive)
-		if difficulty != "" && !strings.EqualFold(p.Difficulty, difficulty) {
+		// Difficulty: skip if filter specified and problem doesn't match any
+		if len(diffSet) > 0 && !diffSet[strings.ToLower(p.Difficulty)] {
 			continue
 		}
 
-		// Filter by tagSlug (any tag, not just primary)
-		if tagSlug != "" {
+		// Tags: skip if filter specified and problem has none of them
+		if len(tagSet) > 0 {
 			found := false
 			for _, tag := range p.TopicTags {
-				if tag.Slug == tagSlug {
+				if tagSet[tag.Slug] {
 					found = true
 					break
 				}
@@ -187,7 +197,6 @@ func FilterProblems(problems []leetcode.Problem, difficulty, tagSlug string) []l
 
 		result = append(result, p)
 	}
-
 	return result
 }
 
