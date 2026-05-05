@@ -3,8 +3,8 @@ package main
 import (
 	"os"
 
-	"github.com/conallob/coding-interview-pop-quiz/internal/cli"
-	"github.com/conallob/coding-interview-pop-quiz/internal/server"
+	"github.com/conallob/coding-interview-pop-quiz/cli"
+	"github.com/conallob/coding-interview-pop-quiz/server"
 )
 
 func main() {

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/conallob/coding-interview-pop-quiz/internal/leetcode"
-	"github.com/conallob/coding-interview-pop-quiz/internal/patterns"
-	"github.com/conallob/coding-interview-pop-quiz/internal/quiz"
+	"github.com/conallob/coding-interview-pop-quiz/leetcode"
+	"github.com/conallob/coding-interview-pop-quiz/patterns"
+	"github.com/conallob/coding-interview-pop-quiz/quiz"
 )
 
 // makeProblem is a test helper that builds a Problem with the given tag slugs.

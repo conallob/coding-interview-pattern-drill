@@ -3,8 +3,8 @@ package cache_test
 import (
 	"testing"
 
-	"github.com/conallob/coding-interview-pop-quiz/internal/cache"
-	"github.com/conallob/coding-interview-pop-quiz/internal/leetcode"
+	"github.com/conallob/coding-interview-pop-quiz/cache"
+	"github.com/conallob/coding-interview-pop-quiz/leetcode"
 )
 
 func setTempCache(t *testing.T) {
