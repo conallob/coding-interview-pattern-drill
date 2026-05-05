@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pattern Drill</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0d1117;
+      --surface:  #161b22;
+      --border:   #30363d;
+      --text:     #c9d1d9;
+      --muted:    #8b949e;
+      --accent:   #58a6ff;
+      --success:  #3fb950;
+      --error:    #f85149;
+      --warning:  #d29922;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    header h1 {
+      font-size: 1.2rem;
+      color: var(--accent);
+      flex: 1;
+    }
+
+    #header-score {
+      font-size: 0.9rem;
+      color: var(--muted);
+      display: none;
+    }
+
+    #gear-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 1.2rem;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: color 0.2s, background 0.2s;
+    }
+
+    #gear-btn:hover { color: var(--text); background: var(--border); }
+
+    main {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      padding: 32px 16px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 800px;
+    }
+
+    /* Screens */
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* Cards */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px;
+    }
+
+    .card h2 {
+      font-size: 1.4rem;
+      margin-bottom: 24px;
+      color: var(--text);
+    }
+
+    /* Form elements */
+    label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+      margin-top: 16px;
+    }
+
+    label:first-of-type { margin-top: 0; }
+
+    input[type="text"],
+    input[type="number"],
+    select {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 10px 14px;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    select:focus { border-color: var(--accent); }
+
+    select option { background: var(--surface); }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 500;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #0d1117;
+    }
+
+    .btn-primary:hover:not(:disabled) { opacity: 0.9; }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+    .btn-success { background: var(--success); color: #0d1117; }
+    .btn-error { background: var(--error); color: #fff; }
+
+    /* Difficulty buttons */
+    .diff-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .diff-btn {
+      padding: 6px 16px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+
+    .diff-btn.selected { border-color: var(--accent); color: var(--accent); background: rgba(88,166,255,0.1); }
+    .diff-btn[data-diff="Easy"].selected { border-color: var(--success); color: var(--success); background: rgba(63,185,80,0.1); }
+    .diff-btn[data-diff="Medium"].selected { border-color: var(--warning); color: var(--warning); background: rgba(210,153,34,0.1); }
+    .diff-btn[data-diff="Hard"].selected { border-color: var(--error); color: var(--error); background: rgba(248,81,73,0.1); }
+
+    /* Difficulty badge */
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .badge-Easy { background: rgba(63,185,80,0.15); color: var(--success); }
+    .badge-Medium { background: rgba(210,153,34,0.15); color: var(--warning); }
+    .badge-Hard { background: rgba(248,81,73,0.15); color: var(--error); }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px;
+      max-width: 520px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    .modal h2 { font-size: 1.2rem; margin-bottom: 16px; }
+
+    .modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 1.4rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .modal-close:hover { color: var(--text); }
+
+    .instructions {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    /* Loading */
+    #screen-loading {
+      display: none;
+      text-align: center;
+      padding: 80px 0;
+    }
+
+    #screen-loading.active { display: block; }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Question screen */
+    .question-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .question-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: var(--text);
+    }
+
+    .problem-content {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 0.88rem;
+      line-height: 1.7;
+      color: var(--text);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 24px;
+      overflow-x: auto;
+      max-height: 320px;
+      overflow-y: auto;
+    }
+
+    .problem-content p { margin-bottom: 8px; }
+    .problem-content pre {
+      background: rgba(0,0,0,0.3);
+      border-radius: 6px;
+      padding: 12px;
+      overflow-x: auto;
+      margin: 8px 0;
+    }
+    .problem-content code { font-family: inherit; }
+    .problem-content ul, .problem-content ol { padding-left: 20px; margin: 8px 0; }
+    .problem-content li { margin-bottom: 4px; }
+    .problem-content strong, .problem-content b { color: var(--text); }
+    .problem-content em, .problem-content i { color: var(--muted); }
+
+    .pattern-label {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .option-btn {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 14px 16px;
+      cursor: pointer;
+      text-align: left;
+      font-size: 0.95rem;
+      transition: all 0.15s;
+    }
+
+    .option-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .option-btn .label { font-weight: 700; margin-right: 8px; color: var(--muted); }
+    .option-btn:hover .label { color: inherit; }
+
+    .kbd-hint {
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    /* Result screen */
+    .result-icon {
+      font-size: 3rem;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .result-icon.correct { color: var(--success); }
+    .result-icon.incorrect { color: var(--error); }
+
+    .result-text {
+      text-align: center;
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+    }
+
+    .result-secondary {
+      text-align: center;
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+
+    .result-actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    /* Done screen */
+    .done-title {
+      font-size: 2rem;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .done-score {
+      text-align: center;
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .done-perf {
+      text-align: center;
+      font-size: 1.1rem;
+      margin-bottom: 32px;
+    }
+
+    .done-actions { text-align: center; }
+
+    /* Alert / message */
+    .msg {
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      margin-top: 12px;
+      display: none;
+    }
+
+    .msg.show { display: block; }
+    .msg.ok { background: rgba(63,185,80,0.1); color: var(--success); border: 1px solid rgba(63,185,80,0.3); }
+    .msg.err { background: rgba(248,81,73,0.1); color: var(--error); border: 1px solid rgba(248,81,73,0.3); }
+
+    /* Setup screen */
+    .setup-actions { margin-top: 20px; }
+
+    /* Idle screen */
+    .idle-actions { margin-top: 28px; }
+
+    /* Progress bar */
+    .progress-bar-wrap {
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      margin-bottom: 20px;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 2px;
+      transition: width 0.3s;
+    }
+
+    /* Responsive */
+    @media (max-width: 520px) {
+      .options-grid { grid-template-columns: 1fr; }
+      .card { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>⚡ Pattern Drill</h1>
+  <span id="header-score"></span>
+  <button id="gear-btn" title="Settings">⚙</button>
+</header>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal">
+    <button class="modal-close" id="modal-close">×</button>
+    <h2>LeetCode Credentials</h2>
+    <div class="instructions">
+      <strong>How to get your session cookie:</strong><br>
+      1. Log in to <strong>leetcode.com</strong><br>
+      2. Open DevTools (F12) → Application tab → Cookies → leetcode.com<br>
+      3. Copy the value of <code>LEETCODE_SESSION</code>
+    </div>
+    <label for="input-session">LEETCODE_SESSION cookie</label>
+    <input type="text" id="input-session" placeholder="Paste your session cookie here">
+    <label for="input-csrf">CSRF Token (optional)</label>
+    <input type="text" id="input-csrf" placeholder="csrftoken value (optional)">
+    <div class="setup-actions">
+      <button class="btn btn-primary" id="save-creds-btn">Save Credentials</button>
+    </div>
+    <div class="msg" id="creds-msg"></div>
+  </div>
+</div>
+
+<main>
+  <div class="container">
+
+    <!-- Setup screen -->
+    <div class="screen" id="screen-setup">
+      <div class="card">
+        <h2>Welcome to Pattern Drill</h2>
+        <p style="color:var(--muted);margin-bottom:20px;">
+          Practice identifying algorithmic patterns in LeetCode problems.
+          To get started, you need your LeetCode session cookie.
+        </p>
+        <div class="instructions">
+          <strong>How to get your session cookie:</strong><br>
+          1. Log in to <strong>leetcode.com</strong><br>
+          2. Open DevTools (F12) → Application tab → Cookies → leetcode.com<br>
+          3. Copy the value of <code>LEETCODE_SESSION</code>
+        </div>
+        <label for="setup-session">LEETCODE_SESSION cookie</label>
+        <input type="text" id="setup-session" placeholder="Paste your session cookie here">
+        <label for="setup-csrf">CSRF Token (optional)</label>
+        <input type="text" id="setup-csrf" placeholder="csrftoken value (optional)">
+        <div class="setup-actions">
+          <button class="btn btn-primary" id="setup-save-btn">Save &amp; Continue</button>
+        </div>
+        <div class="msg" id="setup-msg"></div>
+      </div>
+    </div>
+
+    <!-- Idle screen -->
+    <div class="screen" id="screen-idle">
+      <div class="card">
+        <h2>Start a Quiz</h2>
+
+        <label>Difficulty</label>
+        <div class="diff-group">
+          <button class="diff-btn selected" data-diff="">All</button>
+          <button class="diff-btn" data-diff="Easy">Easy</button>
+          <button class="diff-btn" data-diff="Medium">Medium</button>
+          <button class="diff-btn" data-diff="Hard">Hard</button>
+        </div>
+
+        <label for="tag-select">Pattern</label>
+        <select id="tag-select">
+          <option value="">All Patterns</option>
+        </select>
+
+        <label for="count-input">Number of Questions</label>
+        <input type="number" id="count-input" value="10" min="1" max="100">
+
+        <div class="idle-actions">
+          <button class="btn btn-primary" id="start-quiz-btn">Start Quiz</button>
+        </div>
+        <div class="msg" id="idle-msg"></div>
+      </div>
+    </div>
+
+    <!-- Loading screen -->
+    <div class="screen" id="screen-loading">
+      <div class="spinner"></div>
+      <p id="loading-msg" style="color:var(--muted);">Loading...</p>
+    </div>
+
+    <!-- Question screen -->
+    <div class="screen" id="screen-question">
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" id="progress-bar" style="width:0%"></div>
+      </div>
+      <div class="card">
+        <div class="question-meta">
+          <span id="q-counter">Question 1 of 10</span>
+          <span id="q-badge" class="badge"></span>
+          <span style="flex:1"></span>
+          <span id="q-score" style="color:var(--muted);font-size:0.85rem;"></span>
+        </div>
+        <div class="question-title" id="q-title"></div>
+        <div class="problem-content" id="q-content">
+          <div class="spinner" style="margin:20px auto;width:24px;height:24px;border-width:2px;"></div>
+        </div>
+        <div class="pattern-label">What algorithmic pattern does this problem use?</div>
+        <div class="options-grid" id="options-grid"></div>
+        <div class="kbd-hint">Keyboard: A / B / C / D to answer</div>
+      </div>
+    </div>
+
+    <!-- Result screen -->
+    <div class="screen" id="screen-result">
+      <div class="card">
+        <div class="result-icon" id="result-icon"></div>
+        <div class="result-text" id="result-text"></div>
+        <div class="result-secondary" id="result-secondary"></div>
+        <div class="result-actions">
+          <button class="btn btn-primary" id="next-btn">Next Question →</button>
+        </div>
+        <div style="text-align:center;margin-top:12px;font-size:0.8rem;color:var(--muted);">
+          Press Enter, Space, or N to continue
+        </div>
+      </div>
+    </div>
+
+    <!-- Done screen -->
+    <div class="screen" id="screen-done">
+      <div class="card">
+        <div class="done-title">🎉 Quiz Complete!</div>
+        <div class="done-score" id="done-score"></div>
+        <div class="done-perf" id="done-perf"></div>
+        <div class="done-actions">
+          <button class="btn btn-primary" id="restart-btn">Start New Quiz</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+(function() {
+  'use strict';
+
+  // ── State ──────────────────────────────────────────────────────────────────
+  let selectedDiff = '';
+  let activeScreen = '';
+  let quizTotal = 0;
+  let pollTimer = null;
+
+  // ── Utilities ──────────────────────────────────────────────────────────────
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const el = document.getElementById(id);
+    if (el) el.classList.add('active');
+    activeScreen = id;
+    // Show score in header only during quiz
+    const scoreEl = document.getElementById('header-score');
+    if (id === 'screen-question' || id === 'screen-result') {
+      scoreEl.style.display = 'inline';
+    } else {
+      scoreEl.style.display = 'none';
+    }
+  }
+
+  function showMsg(id, text, type) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = text;
+    el.className = 'msg show ' + (type || 'ok');
+  }
+
+  function hideMsg(id) {
+    const el = document.getElementById(id);
+    if (el) el.className = 'msg';
+  }
+
+  function showLoading(msg) {
+    document.getElementById('loading-msg').textContent = msg || 'Loading...';
+    showScreen('screen-loading');
+  }
+
+  async function apiFetch(url, opts) {
+    const res = await fetch(url, opts);
+    const data = await res.json();
+    return { ok: res.ok, status: res.status, data };
+  }
+
+  // ── Settings modal ─────────────────────────────────────────────────────────
+  const settingsModal = document.getElementById('settings-modal');
+
+  document.getElementById('gear-btn').addEventListener('click', () => {
+    settingsModal.classList.add('open');
+  });
+
+  document.getElementById('modal-close').addEventListener('click', () => {
+    settingsModal.classList.remove('open');
+    hideMsg('creds-msg');
+  });
+
+  settingsModal.addEventListener('click', e => {
+    if (e.target === settingsModal) {
+      settingsModal.classList.remove('open');
+      hideMsg('creds-msg');
+    }
+  });
+
+  document.getElementById('save-creds-btn').addEventListener('click', async () => {
+    await saveCredentials(
+      document.getElementById('input-session').value.trim(),
+      document.getElementById('input-csrf').value.trim(),
+      'creds-msg'
+    );
+  });
+
+  // ── Setup screen ───────────────────────────────────────────────────────────
+  document.getElementById('setup-save-btn').addEventListener('click', async () => {
+    const ok = await saveCredentials(
+      document.getElementById('setup-session').value.trim(),
+      document.getElementById('setup-csrf').value.trim(),
+      'setup-msg'
+    );
+    if (ok) {
+      setTimeout(() => showScreen('screen-idle'), 800);
+    }
+  });
+
+  async function saveCredentials(session, csrf, msgId) {
+    if (!session) {
+      showMsg(msgId, 'Session cookie is required.', 'err');
+      return false;
+    }
+    try {
+      const { ok, data } = await apiFetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session, csrf })
+      });
+      if (ok && data.ok) {
+        showMsg(msgId, 'Credentials saved!', 'ok');
+        return true;
+      } else {
+        showMsg(msgId, data.error || 'Failed to save.', 'err');
+        return false;
+      }
+    } catch (e) {
+      showMsg(msgId, 'Network error: ' + e.message, 'err');
+      return false;
+    }
+  }
+
+  // ── Tags / idle screen ─────────────────────────────────────────────────────
+  async function loadTags() {
+    try {
+      const { data } = await apiFetch('/api/tags');
+      const sel = document.getElementById('tag-select');
+      data.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.slug;
+        opt.textContent = t.name;
+        sel.appendChild(opt);
+      });
+    } catch (e) {
+      console.warn('Failed to load tags:', e);
+    }
+  }
+
+  // Difficulty buttons
+  document.querySelectorAll('.diff-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedDiff = btn.dataset.diff;
+    });
+  });
+
+  // Start quiz
+  document.getElementById('start-quiz-btn').addEventListener('click', async () => {
+    const tag = document.getElementById('tag-select').value;
+    const count = parseInt(document.getElementById('count-input').value, 10) || 10;
+    hideMsg('idle-msg');
+    showLoading('Loading problems...');
+    try {
+      const { ok, data } = await apiFetch('/api/quiz/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ difficulty: selectedDiff, tag, count, refresh: false })
+      });
+      if (ok && data.ok) {
+        quizTotal = data.total;
+        await renderQuestion();
+      } else {
+        showScreen('screen-idle');
+        showMsg('idle-msg', data.error || 'Failed to start quiz.', 'err');
+      }
+    } catch (e) {
+      showScreen('screen-idle');
+      showMsg('idle-msg', 'Network error: ' + e.message, 'err');
+    }
+  });
+
+  // ── Quiz state rendering ───────────────────────────────────────────────────
+  async function renderQuestion() {
+    showLoading('Fetching problem...');
+    try {
+      const { ok, data } = await apiFetch('/api/quiz/state');
+      if (!ok) {
+        showScreen('screen-idle');
+        return;
+      }
+      if (data.phase === 'done') {
+        renderDone(data);
+        return;
+      }
+      if (data.phase !== 'question') {
+        showScreen('screen-idle');
+        return;
+      }
+
+      const q = data.question;
+      const idx = data.index;
+      const total = data.total || quizTotal;
+
+      // Progress
+      const pct = total > 0 ? ((idx) / total) * 100 : 0;
+      document.getElementById('progress-bar').style.width = pct + '%';
+
+      document.getElementById('q-counter').textContent = `Question ${idx + 1} of ${total}`;
+      document.getElementById('q-score').textContent = `Score: ${data.score}`;
+      document.getElementById('header-score').textContent = `${data.score} / ${idx}`;
+
+      const badge = document.getElementById('q-badge');
+      badge.textContent = q.difficulty;
+      badge.className = 'badge badge-' + q.difficulty;
+
+      document.getElementById('q-title').textContent = q.title;
+
+      const contentEl = document.getElementById('q-content');
+      if (q.content) {
+        contentEl.innerHTML = q.content;
+      } else {
+        contentEl.innerHTML = '<em style="color:var(--muted)">No description available.</em>';
+      }
+
+      // Options
+      const grid = document.getElementById('options-grid');
+      grid.innerHTML = '';
+      q.options.forEach((opt, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.dataset.index = i;
+        btn.innerHTML = `<span class="label">[${opt.label}]</span>${opt.name}`;
+        btn.addEventListener('click', () => submitAnswer(i));
+        grid.appendChild(btn);
+      });
+
+      showScreen('screen-question');
+    } catch (e) {
+      showScreen('screen-idle');
+      showMsg('idle-msg', 'Error: ' + e.message, 'err');
+    }
+  }
+
+  async function submitAnswer(choice) {
+    // Disable all option buttons
+    document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+    try {
+      const { ok, data } = await apiFetch('/api/quiz/answer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ choice })
+      });
+      if (!ok) return;
+      renderResult(data, choice);
+    } catch (e) {
+      console.error('submit answer error:', e);
+    }
+  }
+
+  function renderResult(data, choice) {
+    const iconEl = document.getElementById('result-icon');
+    const textEl = document.getElementById('result-text');
+    const secEl = document.getElementById('result-secondary');
+
+    if (data.correct) {
+      iconEl.textContent = '✓';
+      iconEl.className = 'result-icon correct';
+      textEl.innerHTML = `Correct! The pattern is <strong>${data.primaryPattern.name}</strong>`;
+    } else {
+      iconEl.textContent = '✗';
+      iconEl.className = 'result-icon incorrect';
+      const chosen = data.choiceIndex;
+      textEl.innerHTML = `The pattern was <strong>${data.primaryPattern.name}</strong>`;
+      secEl.textContent = 'You chose: ' + (document.querySelectorAll('.option-btn')[chosen]?.textContent?.replace(/\[.\]\s*/, '') || '?');
+    }
+
+    if (data.secondaryPatterns && data.secondaryPatterns.length > 0) {
+      const names = data.secondaryPatterns.map(p => p.name).join(', ');
+      const extra = document.createElement('div');
+      extra.textContent = 'Also tagged: ' + names;
+      secEl.innerHTML = (data.correct ? '' : secEl.outerHTML) + '';
+      secEl.textContent = data.correct
+        ? 'Also tagged: ' + names
+        : 'You chose: ' + (document.querySelectorAll('.option-btn')[data.choiceIndex]?.textContent?.replace(/\[.\]\s*/, '') || '?');
+      if (data.correct) {
+        secEl.textContent = 'Also tagged: ' + names;
+      }
+    } else if (data.correct) {
+      secEl.textContent = '';
+    }
+
+    // If on last question
+    const nextBtn = document.getElementById('next-btn');
+    // We don't know if it's last here, we'll check on next click
+    nextBtn.textContent = 'Next Question →';
+
+    showScreen('screen-result');
+    updateHeaderScore();
+  }
+
+  async function updateHeaderScore() {
+    try {
+      const { data } = await apiFetch('/api/quiz/state');
+      document.getElementById('header-score').textContent = `${data.score} / ${data.index}`;
+    } catch(e) {}
+  }
+
+  document.getElementById('next-btn').addEventListener('click', advanceQuiz);
+
+  async function advanceQuiz() {
+    try {
+      await apiFetch('/api/quiz/next', { method: 'POST' });
+      const { data } = await apiFetch('/api/quiz/state');
+      if (data.phase === 'done') {
+        renderDone(data);
+      } else {
+        await renderQuestion();
+      }
+    } catch (e) {
+      console.error('advance error:', e);
+    }
+  }
+
+  function renderDone(data) {
+    const total = data.total || quizTotal;
+    const score = data.score;
+    const pct = total > 0 ? Math.round(score / total * 100) : 0;
+    document.getElementById('done-score').textContent = `${score} / ${total} (${pct}%)`;
+    let perf;
+    if (pct >= 80) perf = '🏆 Excellent!';
+    else if (pct >= 60) perf = '👍 Good job!';
+    else perf = '📚 Keep practising!';
+    document.getElementById('done-perf').textContent = perf;
+    document.getElementById('header-score').style.display = 'none';
+    showScreen('screen-done');
+  }
+
+  document.getElementById('restart-btn').addEventListener('click', () => {
+    showScreen('screen-idle');
+  });
+
+  // ── Keyboard shortcuts ─────────────────────────────────────────────────────
+  document.addEventListener('keydown', e => {
+    if (activeScreen === 'screen-question') {
+      const map = { a: 0, b: 1, c: 2, d: 3, A: 0, B: 1, C: 2, D: 3 };
+      if (e.key in map && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const idx = map[e.key];
+        const btns = document.querySelectorAll('.option-btn');
+        if (btns[idx] && !btns[idx].disabled) {
+          submitAnswer(idx);
+        }
+      }
+    } else if (activeScreen === 'screen-result') {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'n' || e.key === 'N') {
+        e.preventDefault();
+        advanceQuiz();
+      }
+    }
+  });
+
+  // ── Init ───────────────────────────────────────────────────────────────────
+  async function init() {
+    showLoading('Initialising...');
+    try {
+      const { data } = await apiFetch('/api/settings');
+      await loadTags();
+      if (data.set) {
+        showScreen('screen-idle');
+      } else {
+        showScreen('screen-setup');
+      }
+    } catch (e) {
+      showScreen('screen-setup');
+    }
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,69 @@
+version: 2
+
+project_name: pattern-drill
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: pattern-drill
+    main: ./cmd/pattern-drill
+    binary: pattern-drill
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+
+universal_binaries:
+  - replace: true
+
+archives:
+  - format: tar.gz
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - README.md
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - Merge pull request
+      - Merge branch
+
+brews:
+  - name: pattern-drill
+    repository:
+      owner: conallob
+      name: homebrew-taps
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    directory: Formula
+    homepage: https://github.com/conallob/coding-interview-pop-quiz
+    description: "Pattern recognition trainer for coding interviews — CLI and browser UI"
+    license: MIT
+    test: |
+      system "#{bin}/pattern-drill", "--list-tags"
+    install: |
+      bin.install "pattern-drill"
