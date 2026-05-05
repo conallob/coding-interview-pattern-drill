@@ -1,8 +1,14 @@
 # coding-interview-pattern-drill
 
-I loathe LeetCode-style interviews — both because of how artificial they are and how common it is to reinvent the wheel instead of using a standard library. But they're ubiquitous, so here's a tool to make practicing less painful.
+## Why this exists
 
-`coding-interview-pattern-drill` trains pattern recognition: given a problem description, identify the correct algorithmic approach *before* writing any code. That's the skill that actually matters in a timed interview.
+LeetCode-style interviews are a poor proxy for real engineering ability. They favour people who've memorised solutions over people who can reason through novel problems, and they routinely ask you to reimplement things that exist perfectly well in the standard library. They're also ubiquitous and unavoidable, so here we are.
+
+The biggest source of wasted time in LeetCode prep is misidentifying the pattern. You read a problem, reach for the wrong tool — BFS when you needed Dijkstra, DP when it's just Greedy — and burn 20 minutes going nowhere. The actual coding, once you know the approach, usually takes 10 minutes.
+
+`coding-interview-pattern-drill` targets that gap. Given a real problem description, pick the right algorithmic pattern from four options before writing a single line of code. Wrong options are drawn from a hand-tuned confusion map — the patterns most commonly mistaken for the correct one — so the choices are meaningfully hard rather than obviously wrong.
+
+The goal is to build fast, confident pattern recognition so that in an interview you spend your time on implementation, not on figuring out where to start.
 
 Problems are pulled from the LeetCode API and presented as multiple-choice questions. Wrong options come from a hand-tuned confusion map (the patterns most commonly mistaken for the right one), not random noise.
 
@@ -210,17 +216,3 @@ Problems are cached locally to avoid hammering the LeetCode API:
 
 Use `--refresh-cache` (CLI) or the **Refresh Cache** button (browser UI) to force a fresh fetch.
 
----
-
-## Releasing
-
-Tag a commit and push — GitHub Actions handles the rest:
-
-```sh
-git tag v1.2.3
-git push origin v1.2.3
-```
-
-The release workflow builds binaries for Linux, macOS (universal), and Windows, publishes a GitHub release, and opens a PR against [conallob/homebrew-taps](https://github.com/conallob/homebrew-taps) to update the formula.
-
-Requires a `HOMEBREW_TAP_GITHUB_TOKEN` secret (a PAT with write access to the tap repo) configured in the repository settings.
