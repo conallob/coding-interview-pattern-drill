@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/conallob/coding-interview-pop-quiz/leetcode"
+	"github.com/conallob/coding-interview-pattern-drill/leetcode"
 )
 
 func TestHTMLToTextEmpty(t *testing.T) {
