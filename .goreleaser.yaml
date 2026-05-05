@@ -1,15 +1,15 @@
 version: 2
 
-project_name: pattern-drill
+project_name: coding-interview-pattern-drill
 
 before:
   hooks:
     - go mod tidy
 
 builds:
-  - id: pattern-drill
-    main: ./cmd/pattern-drill
-    binary: pattern-drill
+  - id: coding-interview-pattern-drill
+    main: ./cmd/coding-interview-pattern-drill
+    binary: coding-interview-pattern-drill
     env:
       - CGO_ENABLED=0
     goos:
@@ -54,7 +54,7 @@ changelog:
       - Merge branch
 
 brews:
-  - name: pattern-drill
+  - name: coding-interview-pattern-drill
     repository:
       owner: conallob
       name: homebrew-taps
@@ -64,6 +64,6 @@ brews:
     description: "Pattern recognition trainer for coding interviews — CLI and browser UI"
     license: MIT
     test: |
-      system "#{bin}/pattern-drill", "--list-tags"
+      system "#{bin}/coding-interview-pattern-drill", "--list-tags"
     install: |
-      bin.install "pattern-drill"
+      bin.install "coding-interview-pattern-drill"
