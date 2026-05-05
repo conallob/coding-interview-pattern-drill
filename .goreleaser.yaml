@@ -12,6 +12,8 @@ builds:
     binary: coding-interview-pattern-drill
     env:
       - CGO_ENABLED=0
+    ldflags:
+      - -s -w -X github.com/conallob/coding-interview-pattern-drill/version.Version={{.Version}}
     goos:
       - linux
       - darwin
@@ -53,14 +55,54 @@ changelog:
       - Merge pull request
       - Merge branch
 
+dockers:
+  - image_templates:
+      - "ghcr.io/conallob/coding-interview-pattern-drill:{{ .Tag }}-amd64"
+    dockerfile: Dockerfile
+    use: podman
+    goos: linux
+    goarch: amd64
+    build_flag_templates:
+      - "--platform=linux/amd64"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--label=org.opencontainers.image.source=https://github.com/conallob/coding-interview-pattern-drill"
+  - image_templates:
+      - "ghcr.io/conallob/coding-interview-pattern-drill:{{ .Tag }}-arm64"
+    dockerfile: Dockerfile
+    use: podman
+    goos: linux
+    goarch: arm64
+    build_flag_templates:
+      - "--platform=linux/arm64"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--label=org.opencontainers.image.source=https://github.com/conallob/coding-interview-pattern-drill"
+
+docker_manifests:
+  - name_template: "ghcr.io/conallob/coding-interview-pattern-drill:{{ .Tag }}"
+    use: podman
+    image_templates:
+      - "ghcr.io/conallob/coding-interview-pattern-drill:{{ .Tag }}-amd64"
+      - "ghcr.io/conallob/coding-interview-pattern-drill:{{ .Tag }}-arm64"
+  - name_template: "ghcr.io/conallob/coding-interview-pattern-drill:latest"
+    use: podman
+    image_templates:
+      - "ghcr.io/conallob/coding-interview-pattern-drill:{{ .Tag }}-amd64"
+      - "ghcr.io/conallob/coding-interview-pattern-drill:{{ .Tag }}-arm64"
+
 brews:
   - name: coding-interview-pattern-drill
     repository:
       owner: conallob
-      name: homebrew-tap
+      name: homebrew-taps
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     directory: Formula
-    homepage: https://github.com/conallob/coding-interview-pop-quiz
+    homepage: https://github.com/conallob/coding-interview-pattern-drill
     description: "Pattern recognition trainer for coding interviews — CLI and browser UI"
     license: MIT
     test: |
