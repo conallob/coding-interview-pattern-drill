@@ -74,8 +74,8 @@ coding-interview-pattern-drill [flags]
 
 | Flag | Default | Description |
 |---|---|---|
-| `--difficulty easy\|medium\|hard` | *(all)* | Filter by difficulty — repeatable or comma-separated; omit for all |
-| `--tag <slug>` | *(all patterns)* | Filter by pattern slug — repeatable or comma-separated; omit for all |
+| `--difficulty <list>` | *(all)* | Comma-separated difficulties to include: `easy,medium,hard` |
+| `--tag <list>` | *(all patterns)* | Comma-separated pattern slugs to include (see `--list-tags`) |
 | `--count N` | `10` | Number of problems to quiz |
 | `--list-tags` | — | Print all 18 pattern slugs and exit |
 | `--refresh-cache` | — | Force a fresh fetch from LeetCode, ignoring the local cache |
@@ -90,16 +90,13 @@ coding-interview-pattern-drill
 coding-interview-pattern-drill --difficulty medium --count 20
 
 # Easy and hard, but not medium
-coding-interview-pattern-drill --difficulty easy --difficulty hard
+coding-interview-pattern-drill --difficulty easy,hard
 
 # Drill two commonly-confused patterns together
-coding-interview-pattern-drill --tag dynamic-programming --tag backtracking
-
-# Comma-separated shorthand for the same thing
 coding-interview-pattern-drill --tag dynamic-programming,backtracking
 
 # Medium/hard problems from graph-related patterns only
-coding-interview-pattern-drill --difficulty medium,hard --tag depth-first-search --tag breadth-first-search
+coding-interview-pattern-drill --difficulty medium,hard --tag depth-first-search,breadth-first-search
 
 # See all available pattern slugs
 coding-interview-pattern-drill --list-tags
