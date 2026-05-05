@@ -7,11 +7,11 @@ import (
 	"os"
 	"strings"
 
-	"github.com/conallob/coding-interview-pop-quiz/internal/cache"
-	"github.com/conallob/coding-interview-pop-quiz/internal/config"
-	"github.com/conallob/coding-interview-pop-quiz/internal/leetcode"
-	"github.com/conallob/coding-interview-pop-quiz/internal/patterns"
-	"github.com/conallob/coding-interview-pop-quiz/internal/quiz"
+	"github.com/conallob/coding-interview-pop-quiz/cache"
+	"github.com/conallob/coding-interview-pop-quiz/config"
+	"github.com/conallob/coding-interview-pop-quiz/leetcode"
+	"github.com/conallob/coding-interview-pop-quiz/patterns"
+	"github.com/conallob/coding-interview-pop-quiz/quiz"
 )
 
 // ANSI colour constants
