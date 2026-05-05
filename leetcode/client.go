@@ -10,7 +10,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/conallob/coding-interview-pop-quiz/config"
+	"github.com/conallob/coding-interview-pattern-drill/config"
 )
 
 // Tag represents a topic tag on a LeetCode problem.
