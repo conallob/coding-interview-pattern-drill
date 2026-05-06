@@ -12,6 +12,8 @@ builds:
     binary: coding-interview-pattern-drill
     env:
       - CGO_ENABLED=0
+    ldflags:
+      - -s -w -X github.com/conallob/coding-interview-pattern-drill/version.Version={{.Version}}
     goos:
       - linux
       - darwin
@@ -60,7 +62,7 @@ brews:
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     directory: Formula
-    homepage: https://github.com/conallob/coding-interview-pop-quiz
+    homepage: https://github.com/conallob/coding-interview-pattern-drill
     description: "Pattern recognition trainer for coding interviews — CLI and browser UI"
     license: MIT
     test: |
