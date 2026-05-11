@@ -4,8 +4,8 @@ import (
 	"math/rand"
 	"strings"
 
-	"github.com/conallob/coding-interview-pop-quiz/leetcode"
-	"github.com/conallob/coding-interview-pop-quiz/patterns"
+	"github.com/conallob/coding-interview-pattern-drill/leetcode"
+	"github.com/conallob/coding-interview-pattern-drill/patterns"
 )
 
 // Option represents one answer choice in a quiz question.

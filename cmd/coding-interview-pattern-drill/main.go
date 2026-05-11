@@ -3,8 +3,8 @@ package main
 import (
 	"os"
 
-	"github.com/conallob/coding-interview-pop-quiz/cli"
-	"github.com/conallob/coding-interview-pop-quiz/server"
+	"github.com/conallob/coding-interview-pattern-drill/cli"
+	"github.com/conallob/coding-interview-pattern-drill/server"
 )
 
 func main() {

@@ -3,7 +3,7 @@ package patterns_test
 import (
 	"testing"
 
-	"github.com/conallob/coding-interview-pop-quiz/patterns"
+	"github.com/conallob/coding-interview-pattern-drill/patterns"
 )
 
 func TestAllCount(t *testing.T) {

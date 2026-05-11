@@ -3,7 +3,7 @@ package config_test
 import (
 	"testing"
 
-	"github.com/conallob/coding-interview-pop-quiz/config"
+	"github.com/conallob/coding-interview-pattern-drill/config"
 )
 
 func TestFromEnvNilWhenBothEmpty(t *testing.T) {
