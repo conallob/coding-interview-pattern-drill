@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/conallob/coding-interview-pop-quiz/leetcode"
+	"github.com/conallob/coding-interview-pattern-drill/leetcode"
 )
 
 const ttl = 24 * time.Hour

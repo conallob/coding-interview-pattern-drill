@@ -16,6 +16,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
@@ -30,3 +31,51 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
+
+      - name: Log in to ghcr.io
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | \
+            podman login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build Linux binaries for container images
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: |
+          for GOARCH in amd64 arm64; do
+            CGO_ENABLED=0 GOOS=linux GOARCH=$GOARCH go build \
+              -ldflags "-s -w -X github.com/conallob/coding-interview-pattern-drill/version.Version=${VERSION}" \
+              -o dist/container_${GOARCH}/coding-interview-pattern-drill \
+              ./cmd/coding-interview-pattern-drill
+          done
+
+      - name: Build and push container images
+        env:
+          VERSION: ${{ github.ref_name }}
+          IMAGE: ghcr.io/conallob/coding-interview-pattern-drill
+        run: |
+          for ARCH in amd64 arm64; do
+            cp dist/container_${ARCH}/coding-interview-pattern-drill ./coding-interview-pattern-drill
+            podman build \
+              --platform=linux/${ARCH} \
+              --label=org.opencontainers.image.created="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+              --label=org.opencontainers.image.title=coding-interview-pattern-drill \
+              --label=org.opencontainers.image.revision=${{ github.sha }} \
+              --label=org.opencontainers.image.version=${VERSION} \
+              --label=org.opencontainers.image.source=https://github.com/conallob/coding-interview-pattern-drill \
+              -t ${IMAGE}:${VERSION}-${ARCH} \
+              -f Dockerfile .
+            podman push ${IMAGE}:${VERSION}-${ARCH}
+            rm ./coding-interview-pattern-drill
+          done
+
+      - name: Push multi-arch manifest
+        env:
+          VERSION: ${{ github.ref_name }}
+          IMAGE: ghcr.io/conallob/coding-interview-pattern-drill
+        run: |
+          for TAG in ${VERSION} latest; do
+            podman manifest create ${IMAGE}:${TAG} \
+              ${IMAGE}:${VERSION}-amd64 \
+              ${IMAGE}:${VERSION}-arm64
+            podman manifest push ${IMAGE}:${TAG}
+          done

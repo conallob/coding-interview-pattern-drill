@@ -26,14 +26,14 @@ brew install coding-interview-pattern-drill
 ### Go install
 
 ```sh
-go install github.com/conallob/coding-interview-pop-quiz/cmd/coding-interview-pattern-drill@latest
+go install github.com/conallob/coding-interview-pattern-drill/cmd/coding-interview-pattern-drill@latest
 ```
 
 ### Build from source
 
 ```sh
-git clone https://github.com/conallob/coding-interview-pop-quiz.git
-cd coding-interview-pop-quiz
+git clone https://github.com/conallob/coding-interview-pattern-drill.git
+cd coding-interview-pattern-drill
 go build -o coding-interview-pattern-drill ./cmd/coding-interview-pattern-drill
 ```
 
