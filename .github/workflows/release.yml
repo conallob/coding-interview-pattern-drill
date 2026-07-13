@@ -20,7 +20,9 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-
+      - name: Log in to ghcr.io
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
       - uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser

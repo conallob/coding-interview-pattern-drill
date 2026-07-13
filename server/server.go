@@ -16,15 +16,16 @@ import (
 	"github.com/conallob/coding-interview-pattern-drill/leetcode"
 	"github.com/conallob/coding-interview-pattern-drill/patterns"
 	"github.com/conallob/coding-interview-pattern-drill/quiz"
+	"github.com/conallob/coding-interview-pattern-drill/version"
 )
 
 // resultPayload is the JSON payload for a quiz answer result.
 type resultPayload struct {
-	Correct           bool              `json:"correct"`
-	ChoiceIndex       int               `json:"choiceIndex"`
-	AnswerIndex       int               `json:"answerIndex"`
-	PrimaryPattern    patternInfo       `json:"primaryPattern"`
-	SecondaryPatterns []patternInfo     `json:"secondaryPatterns"`
+	Correct           bool          `json:"correct"`
+	ChoiceIndex       int           `json:"choiceIndex"`
+	AnswerIndex       int           `json:"answerIndex"`
+	PrimaryPattern    patternInfo   `json:"primaryPattern"`
+	SecondaryPatterns []patternInfo `json:"secondaryPatterns"`
 }
 
 type patternInfo struct {
@@ -92,6 +93,7 @@ func Run(args []string) {
 	mux.HandleFunc("/api/quiz/answer", app.handleQuizAnswer)
 	mux.HandleFunc("/api/quiz/next", app.handleQuizNext)
 	mux.HandleFunc("/api/cache/refresh", app.handleCacheRefresh)
+	mux.HandleFunc("/version", handleVersion)
 
 	// Find a free port
 	basePort := *port
@@ -510,4 +512,13 @@ func (a *App) handleCacheRefresh(w http.ResponseWriter, r *http.Request) {
 	a.mu.Unlock()
 
 	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
+}
+
+// GET /version → {"version": "v1.2.3"}
+func handleVersion(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"version": version.Version})
 }
