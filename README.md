@@ -66,7 +66,7 @@ export LEETCODE_SESSION=<paste value here>
 export LEETCODE_CSRF=<csrftoken value, if required>
 ```
 
-**Browser UI** (server mode): paste it into the settings form — no terminal required. See [HTTP Server mode](#http-server-mode) below.
+**Browser UI** (server mode): the settings form includes a **Log in to LeetCode →** button that opens LeetCode's login page in a new tab, then paste the cookie into the form — no terminal required. See [HTTP Server mode](#http-server-mode) below.
 
 Credentials saved via the browser UI are persisted to disk (see [Where credentials are stored](#where-credentials-are-stored)) and survive restarts.
 
