@@ -49,7 +49,7 @@ The tool fetches problems from the LeetCode API, which requires a valid session 
 coding-interview-pattern-drill login
 ```
 
-This opens two browser tabs: one to LeetCode's own login page (so you can sign in however your account works — password, Google, GitHub, or any other SSO/OIDC provider) and one to the tool's local settings form. Once you're logged in to LeetCode, copy the `LEETCODE_SESSION` cookie value from DevTools (`F12` → **Application → Cookies → https://leetcode.com**) and paste it into the settings form. Credentials are saved to `~/.config/pattern-drill/credentials.json` (mode `0600`) and reused on every future run.
+This opens two browser tabs: one to LeetCode's own login page (so you can sign in however your account works — password, Google, GitHub, or any other SSO/OIDC provider) and one to the tool's local settings form. Once you're logged in to LeetCode, copy the `LEETCODE_SESSION` cookie value from DevTools (`F12` → **Application → Cookies → https://leetcode.com**) and paste it into the settings form. Credentials are saved to disk (see [Where credentials are stored](#where-credentials-are-stored)) and reused on every future run.
 
 ### Manual
 
@@ -68,7 +68,19 @@ export LEETCODE_CSRF=<csrftoken value, if required>
 
 **Browser UI** (server mode): paste it into the settings form — no terminal required. See [HTTP Server mode](#http-server-mode) below.
 
-Credentials saved via the browser UI are persisted to `~/.config/pattern-drill/credentials.json` (mode `0600`) and survive restarts.
+Credentials saved via the browser UI are persisted to disk (see [Where credentials are stored](#where-credentials-are-stored)) and survive restarts.
+
+### Where credentials are stored
+
+The tool uses Go's [`os.UserConfigDir()`](https://pkg.go.dev/os#UserConfigDir), which follows each OS's native convention rather than a single fixed path:
+
+| Platform | Path |
+| --- | --- |
+| macOS | `~/Library/Application Support/pattern-drill/credentials.json` |
+| Linux | `$XDG_CONFIG_HOME/pattern-drill/credentials.json` (falls back to `~/.config/pattern-drill/credentials.json` if `XDG_CONFIG_HOME` is unset) |
+| Windows | `%AppData%\pattern-drill\credentials.json` |
+
+Check the path for your platform above. The file is written with mode `0600` (owner read/write only).
 
 ---
 
