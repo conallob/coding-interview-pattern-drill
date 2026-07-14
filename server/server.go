@@ -43,6 +43,20 @@ type App struct {
 	lastResult   *resultPayload
 }
 
+// leetcodeLoginURL is opened alongside the local settings page so the user can
+// authenticate however their account is configured (password, Google, GitHub,
+// or any other SSO/OIDC provider) before copying their session cookie.
+const leetcodeLoginURL = "https://leetcode.com/accounts/login/"
+
+// RunLogin starts the local server (identical to Run) and additionally opens
+// LeetCode's own login page in the browser, so the user can sign in with SSO
+// and then paste the resulting session cookie into the local settings form
+// that Run's setup screen already presents when no credentials are stored.
+func RunLogin(args []string) {
+	openBrowser(leetcodeLoginURL)
+	Run(args)
+}
+
 // Run starts the web server.
 func Run(args []string) {
 	fs := flag.NewFlagSet("pattern-drill serve", flag.ExitOnError)

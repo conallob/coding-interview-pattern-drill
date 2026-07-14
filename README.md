@@ -43,6 +43,16 @@ go build -o coding-interview-pattern-drill ./cmd/coding-interview-pattern-drill
 
 The tool fetches problems from the LeetCode API, which requires a valid session cookie.
 
+### Quickest: `login` command
+
+```sh
+coding-interview-pattern-drill login
+```
+
+This opens two browser tabs: one to LeetCode's own login page (so you can sign in however your account works — password, Google, GitHub, or any other SSO/OIDC provider) and one to the tool's local settings form. Once you're logged in to LeetCode, copy the `LEETCODE_SESSION` cookie value from DevTools (`F12` → **Application → Cookies → https://leetcode.com**) and paste it into the settings form. Credentials are saved to `~/.config/pattern-drill/credentials.json` (mode `0600`) and reused on every future run.
+
+### Manual
+
 1. Log in to [leetcode.com](https://leetcode.com) in your browser
 2. Open DevTools (`F12` or `⌘⌥I`)
 3. Go to **Application → Cookies → https://leetcode.com**
