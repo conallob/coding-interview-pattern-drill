@@ -10,16 +10,16 @@ import (
 	"github.com/conallob/coding-interview-pattern-drill/config"
 )
 
-// withMockEndpoint points graphqlEndpoint at a test server for the duration
+// withMockEndpoint points GraphQLEndpoint at a test server for the duration
 // of the test, restoring the real endpoint afterwards.
 func withMockEndpoint(t *testing.T, handler http.HandlerFunc) {
 	t.Helper()
 	srv := httptest.NewServer(handler)
 	t.Cleanup(srv.Close)
 
-	original := graphqlEndpoint
-	graphqlEndpoint = srv.URL
-	t.Cleanup(func() { graphqlEndpoint = original })
+	original := GraphQLEndpoint
+	GraphQLEndpoint = srv.URL
+	t.Cleanup(func() { GraphQLEndpoint = original })
 }
 
 func TestBuildRequestSetsCookieAndCSRF(t *testing.T) {

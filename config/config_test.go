@@ -1,6 +1,8 @@
 package config_test
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/conallob/coding-interview-pattern-drill/config"
@@ -115,6 +117,41 @@ func TestGetPrefersEnv(t *testing.T) {
 	}
 	if got.Session != "env-session" {
 		t.Errorf("Get() returned Session = %q, want env-session (env should take priority)", got.Session)
+	}
+}
+
+func TestLoadMalformedJSON(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("XDG_CONFIG_HOME", dir)
+
+	credDir := filepath.Join(dir, "pattern-drill")
+	if err := os.MkdirAll(credDir, 0700); err != nil {
+		t.Fatalf("MkdirAll: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(credDir, "credentials.json"), []byte("not valid json"), 0600); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+
+	_, err := config.Load()
+	if err == nil {
+		t.Fatal("Load() expected error on malformed JSON, got nil")
+	}
+}
+
+func TestLoadErrorWhenNoHome(t *testing.T) {
+	t.Setenv("XDG_CONFIG_HOME", "")
+	t.Setenv("HOME", "")
+	_, err := config.Load()
+	if err == nil {
+		t.Fatal("Load() expected error when neither XDG_CONFIG_HOME nor HOME is set")
+	}
+}
+
+func TestSaveErrorWhenNoHome(t *testing.T) {
+	t.Setenv("XDG_CONFIG_HOME", "")
+	t.Setenv("HOME", "")
+	if err := config.Save(&config.Credentials{Session: "sess"}); err == nil {
+		t.Fatal("Save() expected error when neither XDG_CONFIG_HOME nor HOME is set")
 	}
 }
 

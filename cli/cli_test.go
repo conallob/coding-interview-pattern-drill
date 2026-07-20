@@ -7,10 +7,29 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/conallob/coding-interview-pattern-drill/cache"
 	"github.com/conallob/coding-interview-pattern-drill/leetcode"
 	"github.com/conallob/coding-interview-pattern-drill/patterns"
 	"github.com/conallob/coding-interview-pattern-drill/quiz"
 )
+
+// withStdin replaces os.Stdin with a pipe pre-loaded with input, restoring
+// the original after the test.
+func withStdin(t *testing.T, input string) {
+	t.Helper()
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("os.Pipe: %v", err)
+	}
+	if _, err := w.WriteString(input); err != nil {
+		t.Fatalf("write stdin: %v", err)
+	}
+	w.Close()
+
+	old := os.Stdin
+	os.Stdin = r
+	t.Cleanup(func() { os.Stdin = old })
+}
 
 func TestSplitCSVEmpty(t *testing.T) {
 	if got := splitCSV(""); got != nil {
@@ -158,5 +177,107 @@ func TestDisplayResultIncorrect(t *testing.T) {
 	}
 	if !strings.Contains(out, "You chose") {
 		t.Errorf("expected chosen-answer line in output, got %q", out)
+	}
+}
+
+func TestRunListTags(t *testing.T) {
+	out := captureStdout(t, func() {
+		Run([]string{"--list-tags"})
+	})
+	if !strings.Contains(out, "Slug") {
+		t.Errorf("expected header row in --list-tags output, got %q", out)
+	}
+	if len(patterns.All) == 0 {
+		t.Fatal("patterns.All is empty, cannot verify table contents")
+	}
+	if !strings.Contains(out, patterns.All[0].Slug) {
+		t.Errorf("expected first pattern slug in output, got %q", out)
+	}
+}
+
+func TestRunQuizQuitImmediately(t *testing.T) {
+	t.Setenv("LEETCODE_SESSION", "sess")
+	t.Setenv("LEETCODE_CSRF", "")
+	t.Setenv("XDG_CACHE_HOME", t.TempDir())
+
+	problem := leetcode.Problem{
+		QuestionID: "1", Title: "Two Sum", TitleSlug: "two-sum", Difficulty: "Easy",
+		TopicTags: []leetcode.Tag{{Slug: "hash-table"}},
+	}
+	if err := cache.SaveProblems([]leetcode.Problem{problem}); err != nil {
+		t.Fatalf("SaveProblems: %v", err)
+	}
+	if err := cache.SaveContent(map[string]string{"two-sum": "<p>desc</p>"}); err != nil {
+		t.Fatalf("SaveContent: %v", err)
+	}
+
+	withStdin(t, "q\n")
+
+	out := captureStdout(t, func() {
+		Run([]string{"--count", "1"})
+	})
+
+	if !strings.Contains(out, "Quitting") {
+		t.Errorf("expected quit message in output, got %q", out)
+	}
+}
+
+func TestRunQuizAnswerThenComplete(t *testing.T) {
+	t.Setenv("LEETCODE_SESSION", "sess")
+	t.Setenv("LEETCODE_CSRF", "")
+	t.Setenv("XDG_CACHE_HOME", t.TempDir())
+
+	problem := leetcode.Problem{
+		QuestionID: "1", Title: "Two Sum", TitleSlug: "two-sum", Difficulty: "Easy",
+		TopicTags: []leetcode.Tag{{Slug: "hash-table"}},
+	}
+	if err := cache.SaveProblems([]leetcode.Problem{problem}); err != nil {
+		t.Fatalf("SaveProblems: %v", err)
+	}
+	if err := cache.SaveContent(map[string]string{"two-sum": "<p>desc</p>"}); err != nil {
+		t.Fatalf("SaveContent: %v", err)
+	}
+
+	// A single-problem, single-question session ends the loop after one
+	// answer, regardless of which letter is picked, so "a" is safe here
+	// even though the correct answer letter is randomised per run.
+	withStdin(t, "a\n")
+
+	out := captureStdout(t, func() {
+		Run([]string{"--count", "1"})
+	})
+
+	if !strings.Contains(out, "Quiz Complete") {
+		t.Errorf("expected completion banner in output, got %q", out)
+	}
+}
+
+func TestRunQuizInvalidThenQuit(t *testing.T) {
+	t.Setenv("LEETCODE_SESSION", "sess")
+	t.Setenv("LEETCODE_CSRF", "")
+	t.Setenv("XDG_CACHE_HOME", t.TempDir())
+
+	problem := leetcode.Problem{
+		QuestionID: "1", Title: "Two Sum", TitleSlug: "two-sum", Difficulty: "Easy",
+		TopicTags: []leetcode.Tag{{Slug: "hash-table"}},
+	}
+	if err := cache.SaveProblems([]leetcode.Problem{problem}); err != nil {
+		t.Fatalf("SaveProblems: %v", err)
+	}
+	if err := cache.SaveContent(map[string]string{"two-sum": "<p>desc</p>"}); err != nil {
+		t.Fatalf("SaveContent: %v", err)
+	}
+
+	withStdin(t, "z\nq\n")
+
+	out := captureStdout(t, func() {
+		Run([]string{"--count", "1"})
+	})
+
+	if !strings.Contains(out, "Please enter a, b, c, or d.") {
+		t.Errorf("expected invalid-choice prompt in output, got %q", out)
+	}
+	if !strings.Contains(out, "Quitting") {
+		t.Errorf("expected quit message in output, got %q", out)
 	}
 }
