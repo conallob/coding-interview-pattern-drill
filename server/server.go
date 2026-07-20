@@ -58,6 +58,13 @@ func RunLogin(args []string) {
 	Run(args)
 }
 
+// onListen is called with the bound listener right before Run() blocks on
+// http.Serve. It's a no-op in production; tests override it to grab the
+// listener so they can make real HTTP requests against the running server
+// and then close it from outside to unblock Serve and observe the shutdown
+// path, without changing Run()'s public signature.
+var onListen = func(net.Listener) {}
+
 // Run starts the web server.
 func Run(args []string) {
 	fs := flag.NewFlagSet("pattern-drill serve", flag.ExitOnError)
@@ -137,6 +144,8 @@ func Run(args []string) {
 	if !*noOpen {
 		openBrowser(url)
 	}
+
+	onListen(listener)
 
 	if err := http.Serve(listener, mux); err != nil {
 		fmt.Println("Server stopped:", err)
