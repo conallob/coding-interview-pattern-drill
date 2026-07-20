@@ -68,7 +68,7 @@ func TestFetchAllProblemsSinglePage(t *testing.T) {
 				},
 			},
 		}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	})
 
 	c := New(&config.Credentials{Session: "sess"})
@@ -105,7 +105,7 @@ func TestFetchAllProblemsPaginates(t *testing.T) {
 				},
 			},
 		}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	})
 
 	c := New(&config.Credentials{Session: "sess"})
@@ -131,7 +131,7 @@ func TestFetchAllProblemsStopsOnEmptyPage(t *testing.T) {
 				},
 			},
 		}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	})
 
 	c := New(&config.Credentials{Session: "sess"})
@@ -147,7 +147,7 @@ func TestFetchAllProblemsStopsOnEmptyPage(t *testing.T) {
 func TestFetchAllProblemsErrorStatus(t *testing.T) {
 	withMockEndpoint(t, func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusForbidden)
-		w.Write([]byte("bad session"))
+		_, _ = w.Write([]byte("bad session"))
 	})
 
 	c := New(&config.Credentials{Session: "expired"})
@@ -162,7 +162,7 @@ func TestFetchAllProblemsErrorStatus(t *testing.T) {
 
 func TestFetchAllProblemsMalformedJSON(t *testing.T) {
 	withMockEndpoint(t, func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("not json"))
+		_, _ = w.Write([]byte("not json"))
 	})
 
 	c := New(&config.Credentials{Session: "sess"})
@@ -181,7 +181,7 @@ func TestFetchContentSuccess(t *testing.T) {
 				},
 			},
 		}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	})
 
 	c := New(&config.Credentials{Session: "sess"})
@@ -208,7 +208,7 @@ func TestFetchContentErrorStatus(t *testing.T) {
 
 func TestFetchContentMalformedJSON(t *testing.T) {
 	withMockEndpoint(t, func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("{not valid"))
+		_, _ = w.Write([]byte("{not valid"))
 	})
 
 	c := New(&config.Credentials{Session: "sess"})

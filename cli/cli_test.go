@@ -26,7 +26,9 @@ func withStdin(t *testing.T, input string) {
 	if _, err := w.WriteString(input); err != nil {
 		t.Fatalf("write stdin: %v", err)
 	}
-	w.Close()
+	if err := w.Close(); err != nil {
+		t.Fatalf("close stdin pipe: %v", err)
+	}
 
 	old := os.Stdin
 	os.Stdin = r
@@ -131,11 +133,15 @@ func captureStdout(t *testing.T, fn func()) string {
 
 	fn()
 
-	w.Close()
+	if err := w.Close(); err != nil {
+		t.Fatalf("close stdout pipe: %v", err)
+	}
 	os.Stdout = old
 
 	var buf bytes.Buffer
-	io.Copy(&buf, r)
+	if _, err := io.Copy(&buf, r); err != nil {
+		t.Fatalf("read captured stdout: %v", err)
+	}
 	return buf.String()
 }
 

@@ -64,7 +64,7 @@ func Run(args []string) {
 	port := fs.Int("port", 7777, "Port to listen on")
 	noOpen := fs.Bool("no-open", false, "Don't open browser automatically")
 	refreshCache := fs.Bool("refresh-cache", false, "Refresh problem cache on startup")
-	fs.Parse(args)
+	_ = fs.Parse(args) // flag.ExitOnError already terminates the process on a parse error
 
 	app := &App{
 		phase:        "idle",
@@ -85,12 +85,12 @@ func Run(args []string) {
 
 	// If refresh-cache requested, clear and re-fetch
 	if *refreshCache && app.creds != nil {
-		cache.Clear()
+		_ = cache.Clear()
 		client := leetcode.New(app.creds)
 		problems, err := client.FetchAllProblems()
 		if err == nil {
 			app.allProblems = problems
-			cache.SaveProblems(problems)
+			_ = cache.SaveProblems(problems)
 		}
 	}
 
@@ -98,7 +98,7 @@ func Run(args []string) {
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		data, _ := staticFiles.ReadFile("static/index.html")
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.Write(data)
+		_, _ = w.Write(data)
 	})
 	mux.HandleFunc("/api/settings", app.handleSettings)
 	mux.HandleFunc("/api/tags", app.handleTags)
@@ -123,7 +123,7 @@ func Run(args []string) {
 			return
 		}
 		listener = l
-		basePort = basePort + i
+		basePort += i
 		break
 	}
 	if listener == nil {
@@ -138,7 +138,9 @@ func Run(args []string) {
 		openBrowser(url)
 	}
 
-	http.Serve(listener, mux)
+	if err := http.Serve(listener, mux); err != nil {
+		fmt.Println("Server stopped:", err)
+	}
 }
 
 func isAddrInUse(err error) bool {
@@ -155,13 +157,13 @@ func openBrowser(url string) {
 	default:
 		cmd = exec.Command("xdg-open", url)
 	}
-	cmd.Start()
+	_ = cmd.Start() // best-effort: if it fails, the user still has the printed URL to open manually
 }
 
 func writeJSON(w http.ResponseWriter, status int, v interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(v)
+	_ = json.NewEncoder(w).Encode(v)
 }
 
 func writeError(w http.ResponseWriter, status int, msg string) {
@@ -298,7 +300,7 @@ func (a *App) loadProblems(refresh bool, creds *config.Credentials) ([]leetcode.
 			return cached, nil
 		}
 	} else {
-		cache.Clear()
+		_ = cache.Clear()
 	}
 
 	client := leetcode.New(creds)
@@ -306,7 +308,7 @@ func (a *App) loadProblems(refresh bool, creds *config.Credentials) ([]leetcode.
 	if err != nil {
 		return nil, err
 	}
-	cache.SaveProblems(problems)
+	_ = cache.SaveProblems(problems)
 
 	a.mu.Lock()
 	a.allProblems = problems
@@ -383,7 +385,7 @@ func (a *App) handleQuizState(w http.ResponseWriter, r *http.Request) {
 						a.contentCache[slug] = html
 						cc := a.contentCache
 						a.mu.Unlock()
-						cache.SaveContent(cc)
+						_ = cache.SaveContent(cc)
 					}
 				}
 			}
@@ -519,7 +521,7 @@ func (a *App) handleCacheRefresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cache.SaveProblems(problems)
+	_ = cache.SaveProblems(problems)
 
 	a.mu.Lock()
 	a.allProblems = problems

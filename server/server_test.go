@@ -36,7 +36,7 @@ func problemsGraphQLHandler(problems []leetcode.Problem) http.HandlerFunc {
 				},
 			},
 		}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}
 }
 
@@ -84,7 +84,9 @@ func TestHandleSettingsGetUnset(t *testing.T) {
 		t.Fatalf("status = %d, want 200", rec.Code)
 	}
 	var body map[string]bool
-	json.Unmarshal(rec.Body.Bytes(), &body)
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("json.Unmarshal: %v", err)
+	}
 	if body["set"] {
 		t.Error("expected set=false with no credentials")
 	}
@@ -125,7 +127,9 @@ func TestHandleTagsReturnsAllPatterns(t *testing.T) {
 		t.Fatalf("status = %d, want 200", rec.Code)
 	}
 	var items []map[string]string
-	json.Unmarshal(rec.Body.Bytes(), &items)
+	if err := json.Unmarshal(rec.Body.Bytes(), &items); err != nil {
+		t.Fatalf("json.Unmarshal: %v", err)
+	}
 	if len(items) == 0 {
 		t.Error("expected non-empty tag list")
 	}
@@ -190,7 +194,9 @@ func TestHandleQuizStateIdle(t *testing.T) {
 		t.Fatalf("status = %d, want 200", rec.Code)
 	}
 	var body map[string]interface{}
-	json.Unmarshal(rec.Body.Bytes(), &body)
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("json.Unmarshal: %v", err)
+	}
 	if body["phase"] != "idle" {
 		t.Errorf("phase = %v, want idle", body["phase"])
 	}
@@ -210,7 +216,9 @@ func TestHandleQuizStateQuestionPhase(t *testing.T) {
 		t.Fatalf("status = %d, want 200", rec.Code)
 	}
 	var body map[string]interface{}
-	json.Unmarshal(rec.Body.Bytes(), &body)
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("json.Unmarshal: %v", err)
+	}
 	if body["question"] == nil {
 		t.Error("expected question payload, got nil")
 	}
@@ -307,7 +315,9 @@ func TestHandleVersion(t *testing.T) {
 		t.Fatalf("status = %d, want 200", rec.Code)
 	}
 	var body map[string]string
-	json.Unmarshal(rec.Body.Bytes(), &body)
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("json.Unmarshal: %v", err)
+	}
 	if _, ok := body["version"]; !ok {
 		t.Error("expected version field in response")
 	}
@@ -457,7 +467,9 @@ func TestHandleQuizStateResultPhaseShowsPreviousQuestion(t *testing.T) {
 		t.Fatalf("status = %d, want 200", rec.Code)
 	}
 	var body map[string]interface{}
-	json.Unmarshal(rec.Body.Bytes(), &body)
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("json.Unmarshal: %v", err)
+	}
 	if body["question"] == nil {
 		t.Error("expected the just-answered question to be shown during result phase")
 	}
@@ -470,7 +482,7 @@ func TestHandleQuizStateFetchesMissingContent(t *testing.T) {
 				"question": map[string]interface{}{"content": "<p>fetched content</p>"},
 			},
 		}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	})
 
 	app := newTestApp()
@@ -509,4 +521,3 @@ func TestHandleQuizAnswerNoCurrentQuestion(t *testing.T) {
 		t.Errorf("status = %d, want 400", rec.Code)
 	}
 }
-
