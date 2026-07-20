@@ -2,7 +2,7 @@
 
 [![Test](https://github.com/conallob/coding-interview-pattern-drill/workflows/Test/badge.svg)](https://github.com/conallob/coding-interview-pattern-drill/actions)
 [![codecov](https://codecov.io/gh/conallob/coding-interview-pattern-drill/branch/main/graph/badge.svg)](https://codecov.io/gh/conallob/coding-interview-pattern-drill)
-[![Go Version](https://img.shields.io/badge/Go-1.24%2B-blue)](https://go.dev/)
+[![Go Version](https://img.shields.io/badge/Go-1.25%2B-blue)](https://go.dev/)
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](LICENSE)
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-support-yellow.svg?style=flat&logo=buy-me-a-coffee)](https://www.buymeacoffee.com/conallob)
 
