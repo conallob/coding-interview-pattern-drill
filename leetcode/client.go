@@ -111,7 +111,7 @@ func (c *Client) FetchAllProblems() ([]Problem, error) {
 		}
 
 		respBody, err := io.ReadAll(resp.Body)
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		if err != nil {
 			return nil, fmt.Errorf("read response: %w", err)
 		}
@@ -172,7 +172,7 @@ func (c *Client) FetchContent(slug string) (string, error) {
 	}
 
 	respBody, err := io.ReadAll(resp.Body)
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	if err != nil {
 		return "", fmt.Errorf("read response: %w", err)
 	}

@@ -33,7 +33,7 @@ func ensureCacheDir() (string, error) {
 
 // problemsWrapper wraps problems with a fetch timestamp for TTL checking.
 type problemsWrapper struct {
-	FetchedAt time.Time         `json:"fetchedAt"`
+	FetchedAt time.Time          `json:"fetchedAt"`
 	Problems  []leetcode.Problem `json:"problems"`
 }
 

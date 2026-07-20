@@ -48,7 +48,7 @@ func splitCSV(s string) []string {
 func Run(args []string) {
 	fs := flag.NewFlagSet("pattern-drill", flag.ContinueOnError)
 	difficulty := fs.String("difficulty", "", "Difficulties to include, comma-separated: easy,medium,hard")
-	tag        := fs.String("tag", "", "Pattern slugs to include, comma-separated (see --list-tags)")
+	tag := fs.String("tag", "", "Pattern slugs to include, comma-separated (see --list-tags)")
 	count := fs.Int("count", 10, "Number of questions per session")
 	listTags := fs.Bool("list-tags", false, "List all 18 patterns and exit")
 	refreshCache := fs.Bool("refresh-cache", false, "Ignore cached problems and re-fetch")
@@ -162,7 +162,7 @@ func Run(args []string) {
 			return
 		}
 
-		choice := -1
+		var choice int
 		switch line {
 		case "a":
 			choice = 0
@@ -188,7 +188,7 @@ func Run(args []string) {
 	if total > 0 {
 		pct = session.Score * 100 / total
 	}
-	fmt.Printf(colorBold+"\n═══ Quiz Complete! ═══\n"+colorReset)
+	fmt.Printf(colorBold + "\n═══ Quiz Complete! ═══\n" + colorReset)
 	fmt.Printf("Score: %s%d / %d (%d%%)%s\n", colorBold, session.Score, total, pct, colorReset)
 	switch {
 	case pct >= 80:
