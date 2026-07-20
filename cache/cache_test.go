@@ -1,15 +1,30 @@
 package cache_test
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/conallob/coding-interview-pattern-drill/cache"
 	"github.com/conallob/coding-interview-pattern-drill/leetcode"
 )
 
-func setTempCache(t *testing.T) {
+func setTempCache(t *testing.T) string {
 	t.Helper()
-	t.Setenv("XDG_CACHE_HOME", t.TempDir())
+	dir := t.TempDir()
+	t.Setenv("XDG_CACHE_HOME", dir)
+	return filepath.Join(dir, "pattern-drill")
+}
+
+func writeRawCacheFile(t *testing.T, cacheDir, name, content string) {
+	t.Helper()
+	if err := os.MkdirAll(cacheDir, 0700); err != nil {
+		t.Fatalf("MkdirAll: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(cacheDir, name), []byte(content), 0600); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
 }
 
 var sampleProblems = []leetcode.Problem{
@@ -151,6 +166,91 @@ func TestContentCacheCanBeUpdated(t *testing.T) {
 	}
 	if got["new-problem"] != "content" {
 		t.Errorf("new-problem = %q, want content", got["new-problem"])
+	}
+}
+
+func TestLoadProblemsMalformedJSON(t *testing.T) {
+	dir := setTempCache(t)
+	writeRawCacheFile(t, dir, "problems.json", "not valid json")
+
+	_, err := cache.LoadProblems()
+	if err == nil {
+		t.Fatal("LoadProblems() expected error on malformed JSON, got nil")
+	}
+}
+
+func TestLoadProblemsExpiredTTL(t *testing.T) {
+	dir := setTempCache(t)
+	stale := `{"fetchedAt":"` + time.Now().Add(-48*time.Hour).Format(time.RFC3339) + `","problems":[{"questionId":"1"}]}`
+	writeRawCacheFile(t, dir, "problems.json", stale)
+
+	got, err := cache.LoadProblems()
+	if err != nil {
+		t.Fatalf("LoadProblems() error: %v", err)
+	}
+	if got != nil {
+		t.Errorf("LoadProblems() = %v, want nil for TTL-expired cache", got)
+	}
+}
+
+// ── cacheDir/ensureCacheDir error propagation ───────────────────────────────
+
+func withNoHome(t *testing.T) {
+	t.Helper()
+	t.Setenv("XDG_CACHE_HOME", "")
+	t.Setenv("HOME", "")
+}
+
+func TestLoadProblemsErrorWhenNoHome(t *testing.T) {
+	withNoHome(t)
+	_, err := cache.LoadProblems()
+	if err == nil {
+		t.Fatal("LoadProblems() expected error when neither XDG_CACHE_HOME nor HOME is set")
+	}
+}
+
+func TestSaveProblemsErrorWhenNoHome(t *testing.T) {
+	withNoHome(t)
+	if err := cache.SaveProblems(sampleProblems); err == nil {
+		t.Fatal("SaveProblems() expected error when neither XDG_CACHE_HOME nor HOME is set")
+	}
+}
+
+func TestLoadContentErrorWhenNoHome(t *testing.T) {
+	withNoHome(t)
+	got, err := cache.LoadContent()
+	if err == nil {
+		t.Fatal("LoadContent() expected error when neither XDG_CACHE_HOME nor HOME is set")
+	}
+	if got == nil || len(got) != 0 {
+		t.Errorf("LoadContent() = %v, want empty (non-nil) map alongside the error", got)
+	}
+}
+
+func TestSaveContentErrorWhenNoHome(t *testing.T) {
+	withNoHome(t)
+	if err := cache.SaveContent(map[string]string{"a": "b"}); err == nil {
+		t.Fatal("SaveContent() expected error when neither XDG_CACHE_HOME nor HOME is set")
+	}
+}
+
+func TestClearErrorWhenNoHome(t *testing.T) {
+	withNoHome(t)
+	if err := cache.Clear(); err == nil {
+		t.Fatal("Clear() expected error when neither XDG_CACHE_HOME nor HOME is set")
+	}
+}
+
+func TestLoadContentMalformedJSON(t *testing.T) {
+	dir := setTempCache(t)
+	writeRawCacheFile(t, dir, "content.json", "not valid json")
+
+	got, err := cache.LoadContent()
+	if err == nil {
+		t.Fatal("LoadContent() expected error on malformed JSON, got nil")
+	}
+	if got == nil || len(got) != 0 {
+		t.Errorf("LoadContent() = %v, want empty (non-nil) map alongside the error", got)
 	}
 }
 

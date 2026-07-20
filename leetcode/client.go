@@ -43,12 +43,12 @@ func New(creds *config.Credentials) *Client {
 	}
 }
 
-// graphqlEndpoint is a var (not const) so tests can point it at an
+// GraphQLEndpoint is a var (not const) so tests can point it at an
 // httptest.Server instead of the real LeetCode API.
-var graphqlEndpoint = "https://leetcode.com/graphql"
+var GraphQLEndpoint = "https://leetcode.com/graphql"
 
 func (c *Client) buildRequest(body []byte) (*http.Request, error) {
-	req, err := http.NewRequest("POST", graphqlEndpoint, bytes.NewReader(body))
+	req, err := http.NewRequest("POST", GraphQLEndpoint, bytes.NewReader(body))
 	if err != nil {
 		return nil, err
 	}
