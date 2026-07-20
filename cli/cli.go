@@ -24,6 +24,11 @@ const (
 	colorBold   = "\033[1m"
 )
 
+// osExit is a package-level indirection over os.Exit so tests can inject a
+// non-terminating replacement to exercise the error paths in Run() without
+// killing the test binary. Production code always uses the real os.Exit.
+var osExit = os.Exit
+
 // splitCSV splits a comma-separated string into trimmed, lowercased tokens,
 // dropping any empty entries. Returns nil for an empty input string.
 func splitCSV(s string) []string {
@@ -41,7 +46,7 @@ func splitCSV(s string) []string {
 
 // Run is the entrypoint for the CLI subcommand.
 func Run(args []string) {
-	fs := flag.NewFlagSet("pattern-drill", flag.ExitOnError)
+	fs := flag.NewFlagSet("pattern-drill", flag.ContinueOnError)
 	difficulty := fs.String("difficulty", "", "Difficulties to include, comma-separated: easy,medium,hard")
 	tag        := fs.String("tag", "", "Pattern slugs to include, comma-separated (see --list-tags)")
 	count := fs.Int("count", 10, "Number of questions per session")
@@ -50,7 +55,8 @@ func Run(args []string) {
 
 	if err := fs.Parse(args); err != nil {
 		fmt.Fprintln(os.Stderr, "Error parsing flags:", err)
-		os.Exit(1)
+		osExit(1)
+		return
 	}
 
 	if *listTags {
@@ -62,13 +68,15 @@ func Run(args []string) {
 	creds, err := config.Get()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, colorRed+"Error loading credentials:"+colorReset, err)
-		os.Exit(1)
+		osExit(1)
+		return
 	}
 	if creds == nil {
 		fmt.Fprintln(os.Stderr, colorRed+"No credentials found."+colorReset)
 		fmt.Fprintln(os.Stderr, "Set LEETCODE_SESSION env var, or run with `serve` subcommand to configure via browser.")
 		fmt.Fprintln(os.Stderr, "  export LEETCODE_SESSION=<your-session-cookie>")
-		os.Exit(1)
+		osExit(1)
+		return
 	}
 
 	// Load problems
@@ -85,7 +93,8 @@ func Run(args []string) {
 		problems, err = client.FetchAllProblems()
 		if err != nil {
 			fmt.Fprintln(os.Stderr, colorRed+"Failed to fetch problems:"+colorReset, err)
-			os.Exit(1)
+			osExit(1)
+			return
 		}
 		if err := cache.SaveProblems(problems); err != nil {
 			fmt.Fprintln(os.Stderr, "Warning: could not save cache:", err)
@@ -96,13 +105,15 @@ func Run(args []string) {
 	filtered := quiz.FilterProblems(problems, splitCSV(*difficulty), splitCSV(*tag))
 	if len(filtered) == 0 {
 		fmt.Fprintln(os.Stderr, colorRed+"No problems match the given filters."+colorReset)
-		os.Exit(1)
+		osExit(1)
+		return
 	}
 
 	session := quiz.NewSession(filtered, *count)
 	if len(session.Questions) == 0 {
 		fmt.Fprintln(os.Stderr, colorRed+"Could not build any questions from the filtered problems."+colorReset)
-		os.Exit(1)
+		osExit(1)
+		return
 	}
 
 	// Load content cache

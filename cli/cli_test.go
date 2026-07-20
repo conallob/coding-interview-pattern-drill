@@ -3,6 +3,8 @@ package cli
 import (
 	"bytes"
 	"io"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
@@ -29,6 +31,40 @@ func withStdin(t *testing.T, input string) {
 	old := os.Stdin
 	os.Stdin = r
 	t.Cleanup(func() { os.Stdin = old })
+}
+
+// exitSentinel is panicked by the mocked osExit so Run() unwinds immediately
+// at the exit point, the same way a real os.Exit() would halt execution,
+// without killing the test binary.
+type exitSentinel struct{ code int }
+
+// runAndCaptureExit calls Run(args) with osExit replaced by a function that
+// records the requested code and unwinds via panic/recover instead of
+// terminating the process. Returns the captured code, or -1 if Run returned
+// normally without ever calling osExit.
+func runAndCaptureExit(t *testing.T, args []string) int {
+	t.Helper()
+	code := -1
+
+	old := osExit
+	osExit = func(c int) {
+		code = c
+		panic(exitSentinel{c})
+	}
+	t.Cleanup(func() { osExit = old })
+
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				if _, ok := r.(exitSentinel); !ok {
+					panic(r) // not ours — a real bug, let it surface
+				}
+			}
+		}()
+		Run(args)
+	}()
+
+	return code
 }
 
 func TestSplitCSVEmpty(t *testing.T) {
@@ -279,5 +315,74 @@ func TestRunQuizInvalidThenQuit(t *testing.T) {
 	}
 	if !strings.Contains(out, "Quitting") {
 		t.Errorf("expected quit message in output, got %q", out)
+	}
+}
+
+// ── Run() exit paths ─────────────────────────────────────────────────────────
+
+func TestRunExitsOnBadFlag(t *testing.T) {
+	code := runAndCaptureExit(t, []string{"--count", "not-a-number"})
+	if code != 1 {
+		t.Errorf("exit code = %d, want 1", code)
+	}
+}
+
+func TestRunExitsWhenCredentialsErrorLoading(t *testing.T) {
+	t.Setenv("LEETCODE_SESSION", "")
+	t.Setenv("LEETCODE_CSRF", "")
+	t.Setenv("XDG_CONFIG_HOME", "")
+	t.Setenv("HOME", "") // forces config.Load()'s configDir() to error
+
+	code := runAndCaptureExit(t, nil)
+	if code != 1 {
+		t.Errorf("exit code = %d, want 1", code)
+	}
+}
+
+func TestRunExitsWhenNoCredentials(t *testing.T) {
+	t.Setenv("LEETCODE_SESSION", "")
+	t.Setenv("LEETCODE_CSRF", "")
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir()) // valid, empty: config.Get() returns nil, nil
+
+	code := runAndCaptureExit(t, nil)
+	if code != 1 {
+		t.Errorf("exit code = %d, want 1", code)
+	}
+}
+
+func TestRunExitsWhenFetchFails(t *testing.T) {
+	t.Setenv("LEETCODE_SESSION", "sess")
+	t.Setenv("LEETCODE_CSRF", "")
+	t.Setenv("XDG_CACHE_HOME", t.TempDir()) // empty cache forces a fetch
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusForbidden)
+	}))
+	t.Cleanup(srv.Close)
+
+	old := leetcode.GraphQLEndpoint
+	leetcode.GraphQLEndpoint = srv.URL
+	t.Cleanup(func() { leetcode.GraphQLEndpoint = old })
+
+	code := runAndCaptureExit(t, nil)
+	if code != 1 {
+		t.Errorf("exit code = %d, want 1", code)
+	}
+}
+
+func TestRunExitsWhenNoProblemsMatchFilter(t *testing.T) {
+	t.Setenv("LEETCODE_SESSION", "sess")
+	t.Setenv("XDG_CACHE_HOME", t.TempDir())
+
+	problem := leetcode.Problem{
+		TitleSlug: "a", Difficulty: "Easy", TopicTags: []leetcode.Tag{{Slug: "hash-table"}},
+	}
+	if err := cache.SaveProblems([]leetcode.Problem{problem}); err != nil {
+		t.Fatalf("SaveProblems: %v", err)
+	}
+
+	code := runAndCaptureExit(t, []string{"--difficulty", "hard"})
+	if code != 1 {
+		t.Errorf("exit code = %d, want 1", code)
 	}
 }
